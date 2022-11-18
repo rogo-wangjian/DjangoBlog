@@ -1,3 +1,5 @@
+from blog.documents import ArticleDocument, ArticleDocumentManager
+from blog.models import Article
 from django.utils.encoding import force_str
 from elasticsearch_dsl import Q
 from haystack.backends import BaseEngine, BaseSearchBackend, BaseSearchQuery, log_query
@@ -5,19 +7,14 @@ from haystack.forms import ModelSearchForm
 from haystack.models import SearchResult
 from haystack.utils import log as logging
 
-from blog.documents import ArticleDocument, ArticleDocumentManager
-from blog.models import Article
-
 logger = logging.getLogger(__name__)
 
 
 class ElasticSearchBackend(BaseSearchBackend):
     def __init__(self, connection_alias, **connection_options):
-        super(
-            ElasticSearchBackend,
-            self).__init__(
-            connection_alias,
-            **connection_options)
+        super(ElasticSearchBackend, self).__init__(
+            connection_alias, **connection_options
+        )
         self.manager = ArticleDocumentManager()
         self.include_spelling = True
 
@@ -57,10 +54,12 @@ class ElasticSearchBackend(BaseSearchBackend):
     def get_suggestion(query: str) -> str:
         """获取推荐词, 如果没有找到添加原搜索词"""
 
-        search = ArticleDocument.search() \
-            .query("match", body=query) \
-            .suggest('suggest_search', query, term={'field': 'body'}) \
+        search = (
+            ArticleDocument.search()
+            .query("match", body=query)
+            .suggest("suggest_search", query, term={"field": "body"})
             .execute()
+        )
 
         keywords = []
         for suggest in search.suggest.suggest_search:
@@ -69,14 +68,14 @@ class ElasticSearchBackend(BaseSearchBackend):
             else:
                 keywords.append(suggest["text"])
 
-        return ' '.join(keywords)
+        return " ".join(keywords)
 
     @log_query
     def search(self, query_string, **kwargs):
-        logger.info('search query_string:' + query_string)
+        logger.info("search query_string:" + query_string)
 
-        start_offset = kwargs.get('start_offset')
-        end_offset = kwargs.get('end_offset')
+        start_offset = kwargs.get("start_offset")
+        end_offset = kwargs.get("end_offset")
 
         # 推荐词搜索
         if getattr(self, "is_suggest", None):
@@ -84,22 +83,26 @@ class ElasticSearchBackend(BaseSearchBackend):
         else:
             suggestion = query_string
 
-        q = Q('bool',
-              should=[Q('match', body=suggestion), Q('match', title=suggestion)],
-              minimum_should_match="70%")
+        q = Q(
+            "bool",
+            should=[Q("match", body=suggestion), Q("match", title=suggestion)],
+            minimum_should_match="70%",
+        )
 
-        search = ArticleDocument.search() \
-                     .query('bool', filter=[q]) \
-                     .filter('term', status='p') \
-                     .filter('term', type='a') \
-                     .source(False)[start_offset: end_offset]
+        search = (
+            ArticleDocument.search()
+            .query("bool", filter=[q])
+            .filter("term", status="p")
+            .filter("term", type="a")
+            .source(False)[start_offset:end_offset]
+        )
 
         results = search.execute()
-        hits = results['hits'].total
+        hits = results["hits"].total
         raw_results = []
-        for raw_result in results['hits']['hits']:
-            app_label = 'blog'
-            model_name = 'Article'
+        for raw_result in results["hits"]["hits"]:
+            app_label = "blog"
+            model_name = "Article"
             additional_fields = {}
 
             result_class = SearchResult
@@ -107,27 +110,28 @@ class ElasticSearchBackend(BaseSearchBackend):
             result = result_class(
                 app_label,
                 model_name,
-                raw_result['_id'],
-                raw_result['_score'],
-                **additional_fields)
+                raw_result["_id"],
+                raw_result["_score"],
+                **additional_fields
+            )
             raw_results.append(result)
         facets = {}
         spelling_suggestion = None if query_string == suggestion else suggestion
 
         return {
-            'results': raw_results,
-            'hits': hits,
-            'facets': facets,
-            'spelling_suggestion': spelling_suggestion,
+            "results": raw_results,
+            "hits": hits,
+            "facets": facets,
+            "spelling_suggestion": spelling_suggestion,
         }
 
 
 class ElasticSearchQuery(BaseSearchQuery):
     def _convert_datetime(self, date):
-        if hasattr(date, 'hour'):
-            return force_str(date.strftime('%Y%m%d%H%M%S'))
+        if hasattr(date, "hour"):
+            return force_str(date.strftime("%Y%m%d%H%M%S"))
         else:
-            return force_str(date.strftime('%Y%m%d000000'))
+            return force_str(date.strftime("%Y%m%d000000"))
 
     def clean(self, query_fragment):
         """
@@ -152,7 +156,7 @@ class ElasticSearchQuery(BaseSearchQuery):
 
             cleaned_words.append(word)
 
-        return ' '.join(cleaned_words)
+        return " ".join(cleaned_words)
 
     def build_query_fragment(self, field, filter_type, value):
         return value.query_string
@@ -165,15 +169,18 @@ class ElasticSearchQuery(BaseSearchQuery):
         return self._spelling_suggestion
 
     def build_params(self, spelling_query=None):
-        kwargs = super(ElasticSearchQuery, self).build_params(spelling_query=spelling_query)
+        kwargs = super(ElasticSearchQuery, self).build_params(
+            spelling_query=spelling_query
+        )
         return kwargs
 
 
 class ElasticSearchModelSearchForm(ModelSearchForm):
-
     def search(self):
         # 是否建议搜索
-        self.searchqueryset.query.backend.is_suggest = self.data.get("is_suggest") != "no"
+        self.searchqueryset.query.backend.is_suggest = (
+            self.data.get("is_suggest") != "no"
+        )
         sqs = super().search()
         return sqs
 

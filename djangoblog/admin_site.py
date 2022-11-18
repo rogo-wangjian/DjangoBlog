@@ -1,14 +1,12 @@
-from django.contrib.admin import AdminSite
-from django.contrib.admin.models import LogEntry
-from django.contrib.sites.admin import SiteAdmin
-from django.contrib.sites.models import Site
-
 from accounts.admin import *
 from blog.admin import *
 from blog.models import *
 from comments.admin import *
 from comments.models import *
-from djangoblog.logentryadmin import LogEntryAdmin
+from django.contrib.admin import AdminSite
+from django.contrib.admin.models import LogEntry
+from django.contrib.sites.admin import SiteAdmin
+from django.contrib.sites.models import Site
 from oauth.admin import *
 from oauth.models import *
 from owntracks.admin import *
@@ -16,12 +14,14 @@ from owntracks.models import *
 from servermanager.admin import *
 from servermanager.models import *
 
+from djangoblog.logentryadmin import LogEntryAdmin
+
 
 class DjangoBlogAdminSite(AdminSite):
-    site_header = 'djangoblog administration'
-    site_title = 'djangoblog site admin'
+    site_header = "djangoblog administration"
+    site_title = "djangoblog site admin"
 
-    def __init__(self, name='admin'):
+    def __init__(self, name="admin"):
         super().__init__(name)
 
     def has_permission(self, request):
@@ -38,7 +38,7 @@ class DjangoBlogAdminSite(AdminSite):
     #     return urls + my_urls
 
 
-admin_site = DjangoBlogAdminSite(name='admin')
+admin_site = DjangoBlogAdminSite(name="admin")
 
 admin_site.register(Article, ArticlelAdmin)
 admin_site.register(Category, CategoryAdmin)
