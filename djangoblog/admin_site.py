@@ -18,8 +18,8 @@ from djangoblog.logentryadmin import LogEntryAdmin
 
 
 class DjangoBlogAdminSite(AdminSite):
-    site_header = "djangoblog administration"
-    site_title = "djangoblog site admin"
+    site_header = "lookie 个人博客"
+    site_title = "lookie 个人博客"
 
     def __init__(self, name="admin"):
         super().__init__(name)
