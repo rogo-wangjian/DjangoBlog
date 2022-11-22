@@ -2,7 +2,6 @@ import typing
 from datetime import timedelta
 
 from django.core.cache import cache
-
 from djangoblog.utils import send_email
 
 _code_ttl = timedelta(minutes=5)

@@ -2,13 +2,13 @@ from django.test import Client, RequestFactory, TestCase
 from django.utils import timezone
 from werobot.messages.messages import TextMessage
 
-from djangoblog.utils import get_current_site
 from accounts.models import BlogUser
-from blog.models import Category, Article
+from blog.models import Article, Category
+from djangoblog.utils import get_current_site
 from servermanager.api.commonapi import TuLing
+
 from .models import commands
-from .robot import MessageHandler, CommandHandler
-from .robot import search, category, recents
+from .robot import CommandHandler, MessageHandler, category, recents, search
 
 
 # Create your tests here.
@@ -19,7 +19,7 @@ class ServerManagerTest(TestCase):
 
     def test_tuling(self):
         t = TuLing()
-        content = t.getdata('test')
+        content = t.getdata("test")
         self.assertIsNotNone(content)
 
     def test_validate_comment(self):
@@ -27,9 +27,10 @@ class ServerManagerTest(TestCase):
         user = BlogUser.objects.create_superuser(
             email="liangliangyy1@gmail.com",
             username="liangliangyy1",
-            password="liangliangyy1")
+            password="liangliangyy1",
+        )
 
-        self.client.login(username='liangliangyy1', password='liangliangyy1')
+        self.client.login(username="liangliangyy1", password="liangliangyy1")
 
         c = Category()
         c.name = "categoryccc"
@@ -42,8 +43,8 @@ class ServerManagerTest(TestCase):
         article.body = "nicecontentccc"
         article.author = user
         article.category = c
-        article.type = 'a'
-        article.status = 'p'
+        article.type = "a"
+        article.status = "p"
         article.save()
         s = TextMessage([])
         s.content = "nice"
@@ -51,7 +52,7 @@ class ServerManagerTest(TestCase):
         rsp = category(None, None)
         self.assertIsNotNone(rsp)
         rsp = recents(None, None)
-        self.assertTrue(rsp != '暂时还没有文章')
+        self.assertTrue(rsp != "暂时还没有文章")
 
         cmd = commands()
         cmd.title = "test"
@@ -60,25 +61,25 @@ class ServerManagerTest(TestCase):
         cmd.save()
 
         cmdhandler = CommandHandler()
-        rsp = cmdhandler.run('test')
+        rsp = cmdhandler.run("test")
         self.assertIsNotNone(rsp)
-        s.source = 'u'
-        s.content = 'test'
+        s.source = "u"
+        s.content = "test"
         msghandler = MessageHandler(s, {})
 
         # msghandler.userinfo.isPasswordSet = True
         # msghandler.userinfo.isAdmin = True
         msghandler.handler()
-        s.content = 'y'
+        s.content = "y"
         msghandler.handler()
-        s.content = 'idcard:12321233'
+        s.content = "idcard:12321233"
         msghandler.handler()
-        s.content = 'weather:上海'
+        s.content = "weather:上海"
         msghandler.handler()
-        s.content = 'admin'
+        s.content = "admin"
         msghandler.handler()
-        s.content = '123'
+        s.content = "123"
         msghandler.handler()
 
-        s.content = 'exit'
+        s.content = "exit"
         msghandler.handler()

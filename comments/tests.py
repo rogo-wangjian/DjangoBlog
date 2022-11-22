@@ -3,14 +3,13 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import BlogUser
-from blog.models import Category, Article
+from blog.models import Article, Category
 from comments.models import Comment
 from comments.templatetags.comments_tags import *
-from djangoblog.utils import get_current_site
-from djangoblog.utils import get_max_articleid_commentid
-
+from djangoblog.utils import get_current_site, get_max_articleid_commentid
 
 # Create your tests here.
+
 
 class CommentsTest(TestCase):
     def setUp(self):
@@ -22,9 +21,10 @@ class CommentsTest(TestCase):
         user = BlogUser.objects.create_superuser(
             email="liangliangyy1@gmail.com",
             username="liangliangyy1",
-            password="liangliangyy1")
+            password="liangliangyy1",
+        )
 
-        self.client.login(username='liangliangyy1', password='liangliangyy1')
+        self.client.login(username="liangliangyy1", password="liangliangyy1")
 
         category = Category()
         category.name = "categoryccc"
@@ -37,28 +37,25 @@ class CommentsTest(TestCase):
         article.body = "nicecontentccc"
         article.author = user
         article.category = category
-        article.type = 'a'
-        article.status = 'p'
+        article.type = "a"
+        article.status = "p"
         article.save()
 
-        comment_url = reverse(
-            'comments:postcomment', kwargs={
-                'article_id': article.id})
+        comment_url = reverse("comments:postcomment", kwargs={"article_id": article.id})
 
-        response = self.client.post(comment_url,
-                                    {
-                                        'body': '123ffffffffff'
-                                    })
+        response = self.client.post(comment_url, {"body": "123ffffffffff"})
 
         self.assertEqual(response.status_code, 302)
 
         article = Article.objects.get(pk=article.pk)
         self.assertEqual(len(article.comment_list()), 1)
 
-        response = self.client.post(comment_url,
-                                    {
-                                        'body': '123ffffffffff',
-                                    })
+        response = self.client.post(
+            comment_url,
+            {
+                "body": "123ffffffffff",
+            },
+        )
 
         self.assertEqual(response.status_code, 302)
 
@@ -66,9 +63,10 @@ class CommentsTest(TestCase):
         self.assertEqual(len(article.comment_list()), 2)
         parent_comment_id = article.comment_list()[0].id
 
-        response = self.client.post(comment_url,
-                                    {
-                                        'body': '''
+        response = self.client.post(
+            comment_url,
+            {
+                "body": """
                                         # Title1
 
         ```python
@@ -80,9 +78,10 @@ class CommentsTest(TestCase):
         [ddd](http://www.baidu.com)
 
 
-        ''',
-                                        'parent_comment_id': parent_comment_id
-                                    })
+        """,
+                "parent_comment_id": parent_comment_id,
+            },
+        )
 
         self.assertEqual(response.status_code, 302)
 
@@ -97,4 +96,5 @@ class CommentsTest(TestCase):
         self.assertIsNotNone(s)
 
         from comments.utils import send_comment_email
+
         send_comment_email(comment)
